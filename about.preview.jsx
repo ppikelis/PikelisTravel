@@ -9,7 +9,7 @@ function AboutMePage() {
     <div className="bg-[#f7f4ef] text-slate-900">
       <div className="mx-auto flex max-w-5xl flex-col gap-10 px-6 pb-16 pt-10">
         <nav className="flex items-center justify-between gap-6 py-4 text-sm">
-          <a className="flex items-center" href="/preview.html">
+          <a className="flex items-center" href="/">
             <span className="flex flex-col leading-none">
               <span className="font-serif text-lg font-semibold uppercase tracking-[0.3em] text-slate-900">
                 PIKELIS TRAVEL

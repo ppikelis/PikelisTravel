@@ -201,7 +201,7 @@ const extremeExperiences = [
 
 const TopNav = () => (
   <nav className="flex items-center justify-between gap-6 py-4 text-sm">
-    <a className="flex items-center" href="/preview.html">
+    <a className="flex items-center" href="/">
       <span className="flex flex-col leading-none">
         <span className="font-serif text-lg font-semibold uppercase tracking-[0.3em] text-slate-900">
           PIKELIS TRAVEL

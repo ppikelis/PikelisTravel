@@ -111,7 +111,7 @@ const searchSuggestions = [
 
 const TopNav = () => (
   <nav className="flex items-center justify-between gap-6 py-4 text-sm">
-    <a className="flex items-center" href="/preview.html">
+    <a className="flex items-center" href="/">
       <span className="flex flex-col leading-none">
         <span className="font-serif text-lg font-semibold uppercase tracking-[0.3em] text-slate-900">
           PIKELIS TRAVEL
@@ -546,9 +546,7 @@ function HomepageConcepts() {
               Travel more. Waste less time planning.
             </p>
             <p className="text-sm leading-snug text-slate-600">
-              Premium travel guides built from 15 years of independent trip
-              planning across 140 countries — real routes used for myself,
-              family, and friends.
+              Premium travel guides built from 15 years of independent travel across 140 countries — every route personally tested.
             </p>
           </div>
           <SearchBar />

@@ -577,9 +577,7 @@ export default function HomepageConcepts() {
               Travel more. Waste less time planning.
             </p>
             <p className="text-sm leading-snug text-slate-600">
-              Premium travel guides built from 15 years of independent trip
-              planning across 140 countries — real routes used for myself,
-              family, and friends.
+              Premium travel guides built from 15 years of independent travel across 140 countries — every route personally tested.
             </p>
           </div>
           <SearchBar />
