@@ -1,0 +1,37 @@
+{
+  "story_id": "aconcagua-summit-expedition",
+  "title": "Aconcagua Summit Expedition",
+  "slug": "aconcagua-summit-expedition",
+  "status": "published",
+  "created_date": "2026-04-18",
+  "language": "en",
+  "geography": {
+    "continent": "south_america",
+    "country": "Argentina",
+    "regions": [
+      "Aconcagua",
+      "Plaza Argentina",
+      "Plaza Colera",
+      "Canaleta"
+    ]
+  },
+  "classification": {
+    "primary_collection": "Seven Summits",
+    "all_collections": [
+      "Seven Summits",
+      "High Altitude",
+      "Expeditions"
+    ],
+    "journey_category": "expedition",
+    "activity_category": "mountaineering"
+  },
+  "difficulty": {
+    "overall_level": "very_high",
+    "technical_skill_required": "high_altitude_experience_recommended"
+  },
+  "credibility": {
+    "times_completed": 1,
+    "most_recent_completion": "2017-02-15",
+    "tested_by": "pikelis"
+  }
+}
