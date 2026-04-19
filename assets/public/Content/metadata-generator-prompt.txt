@@ -36,22 +36,41 @@ content.media.gallery_images
 Do NOT invent images.
 
 ═══════════════════════════════════════════════════════════════
-HERO + SALES CONTENT SOURCE RULE
+STRICT SOURCE RULE — READ THIS BEFORE GENERATING ANYTHING
 ═══════════════════════════════════════════════════════════════
 
-The following MUST be derived from story.txt and guide.pdf:
+PRIORITY ORDER for every field:
+  1. guide.pdf   — always the primary source. Use exact figures, exact
+                   place names, and exact claims stated in the guide.
+  2. story.txt   — use for tone, personal experience details, and any
+                   facts not covered in the guide.
+  3. Inference   — ONLY if a value cannot be found in either source.
+                   Mark inferred values with a comment // inferred
 
-hero.eyebrow
-hero.subtitle
-hero.primary_stats
+DO NOT invent, estimate, or paraphrase figures that appear in the
+source files. If the guide says "5 hours", write "5 hours" — not
+"approximately 5–6 hours". If the guide says "Gadmen bus stop",
+write "Gadmen bus stop" — not "Gadmen village".
 
-sales.why_this_trip
-sales.who_this_is_for
-sales.what_you_get
-sales.difficulty_at_a_glance
-sales.not_suitable
+FIELDS THAT MUST COME DIRECTLY FROM THE GUIDE (if guide exists):
 
-Avoid generic marketing language.
+  hero.primary_stats — every label/value pair must match the guide
+  hero.eyebrow       — use country, journey type, and activity from guide
+  hero.subtitle      — one sentence that reflects the guide's own framing
+  sales.why_this_trip         — use the guide's own selling points
+  sales.who_this_is_for       — use the guide's stated audience
+  sales.what_you_get          — list exactly what the guide contains
+  sales.difficulty_at_a_glance — use the guide's difficulty language
+  sales.not_suitable           — use the guide's own exclusions
+
+  difficulty.elevation_gain_m  — exact figure from guide
+  difficulty.total_distance_km — exact figure from guide
+  timing.duration_hours        — exact figure from guide
+  logistics.transportation_required — exact modes from guide
+  logistics.special_equipment  — exact gear list from guide
+
+If the guide PDF is not available, fall back to story.txt for the
+above fields, then inference as last resort.
 
 ═══════════════════════════════════════════════════════════════
 STORY TEXT

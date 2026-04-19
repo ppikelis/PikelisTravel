@@ -12,44 +12,36 @@
     "eyebrow": "SWITZERLAND • DAY TRIP • HIKING",
     "subtitle": "A full alpine day from Zurich ending at one of Switzerland's most dramatic suspension bridges, high above a turquoise glacier lake.",
     "primary_stats": [
-      { "label": "Duration", "value": "1 day · ~5.5 h hiking" },
-      { "label": "Effort", "value": "15 km · 1,200 m ascent" },
-      { "label": "Altitude", "value": "1,720 m max" },
-      { "label": "Access", "value": "Train + bus from Zurich" },
-      { "label": "Highlight", "value": "Trift suspension bridge above glacier lake" }
+      { "label": "Duration", "value": "1 day" },
+      { "label": "Effort", "value": "~3–4 h total (with gondola)" },
+      { "label": "Altitude", "value": "1,720 m (bridge level)" },
+      { "label": "Access", "value": "Car ~2 h · Public transport ~3.5 h from Zürich" },
+      { "label": "Highlight", "value": "170 m suspension bridge" }
     ]
   },
   "sales": {
     "why_this_trip": [
-      "One of the most dramatic suspension bridges in the Alps — reachable in a single day from Zurich",
-      "The full valley approach earns the views: forest, rock, glacier lake, and exposed bridge in one route",
-      "No technical skills needed — just solid hiking fitness and a good weather window",
-      "Feels like a proper alpine expedition without requiring gear, guides, or multiple days"
+      "Best suspension bridge hike near Zürich",
+      "Real glacier landscape without overnight stay",
+      "Feels remote but fits into one day",
+      "No technical skills required"
     ],
     "who_this_is_for": [
-      "Hikers with solid fitness who want a big alpine day without multi-day commitment",
-      "Photographers and visual travelers who want strong payoff in every direction",
-      "People based in Zurich or Switzerland looking for a memorable day trip",
-      "Anyone who wants a genuine mountain experience, not just a viewpoint"
+      "Based in Zurich for 1–2 days or more",
+      "Comfortable walking uphill for 2–3 hours",
+      "Prefer independent travel",
+      "Prefer clear step-by-step logistics, not inspiration"
     ],
-    "what_you_get": [
-      "Complete step-by-step route guide from Zurich HB to the bridge and back",
-      "Train, bus and cable car logistics so you can do it without a car",
-      "Honest difficulty breakdown and what to expect at each stage",
-      "Packing list and gear recommendations for the route",
-      "Insider timing advice for bridge photos and crowd avoidance",
-      "Seasonal notes including shoulder-season snow conditions"
-    ],
+    "what_you_get": [],
     "difficulty_at_a_glance": [
-      "15 km with 1,200 m of ascent — a long, demanding alpine day",
-      "Rocky and uneven terrain in the upper section",
-      "The bridge is exposed and sways — not for severe acrophobia",
-      "Shoulder-season snow and ice can raise the difficulty significantly"
+      "Steepness: consistent uphill ~1.5 h",
+      "Exposure: suspension bridge only",
+      "Trail: marked alpine hiking path",
+      "Fitness: ~450 m ascent / ~6 km"
     ],
     "not_suitable": [
-      "Strong fear of heights or exposed, swaying bridges",
-      "Beginners without experience on mountain trails",
-      "Anyone expecting a flat or easy walk"
+      "If you have a fear of heights",
+      "If you have a fear of exposed bridge crossings"
     ]
   },
   "story_id": "switzerland-triftbrucke-2020",
