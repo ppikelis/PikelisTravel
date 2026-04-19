@@ -311,6 +311,47 @@
       "dramatic mountain hikes Europe"
     ]
   },
+  "route": {
+    "mode": "hiking",
+    "map_center": { "lat": 46.724, "lng": 8.364 },
+    "map_zoom": 13,
+    "waypoints": [
+      {
+        "name": "Gadmen / Triftbahn station",
+        "lat": 46.7184,
+        "lng": 8.3482,
+        "type": "start",
+        "transport_to_next": "hiking",
+        "duration_to_next": "45 min"
+      },
+      {
+        "name": "Trift mountain hut",
+        "lat": 46.7254,
+        "lng": 8.3635,
+        "type": "stop",
+        "note": "Rest stop with valley views",
+        "transport_to_next": "hiking",
+        "duration_to_next": "30 min"
+      },
+      {
+        "name": "Trift suspension bridge",
+        "lat": 46.7298,
+        "lng": 8.3719,
+        "type": "highlight",
+        "note": "Main highlight – bridge crossing",
+        "transport_to_next": "hiking",
+        "duration_to_next": "1.5h return"
+      },
+      {
+        "name": "Gadmen / Triftbahn station",
+        "lat": 46.7184,
+        "lng": 8.3482,
+        "type": "end",
+        "transport_to_next": null,
+        "duration_to_next": null
+      }
+    ]
+  },
   "analytics": {
     "views": 0,
     "guide_conversions": 0,
