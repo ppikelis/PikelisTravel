@@ -204,21 +204,32 @@ self_catering, luxury_lodge, homestay
 ROUTE FIELD RULES
 ═══════════════════════════════════════════════════════════════
 
-route.waypoints must include:
-- At least a "start" and "end" type entry
-- One "highlight" type for the main attraction
-- Optional "stop" entries for intermediate points
-- transport_to_next: one of hiking, train, bus, cable_car, boat, car, plane, motorcycle, bicycle
-- duration_to_next: human-readable string e.g. "45 min", "2h", "1.5h"
-- lat/lng: real coordinates (look up accurately)
-- map_center: midpoint of the route
-- map_zoom: 12–15 depending on route spread (day hike = 13–14, road trip = 8–10)
+route.points: 2–5 entries covering the key stops of the journey.
+Always include "start". Always include the main "highlight".
+Include "end" only if it differs from start OR if it is a meaningful
+return point (e.g. back to the airport/station the trip began from).
+Add "stop" entries for significant intermediate points only — not
+every minor stop. Max 5 points total.
 
-waypoint types:
-  start       — orange marker, first point of the journey
-  end         — orange marker, return/final point
-  highlight   — dark marker, the main attraction
-  stop        — grey marker, intermediate rest/transfer point
+point types:
+  start     — first point of the journey (train station, airport, city)
+  stop      — significant intermediate point (transfer, overnight, border)
+  highlight — the main attraction or goal of the trip
+  end       — final return/finish point
+
+point fields:
+  name              — place name (Proper Case)
+  lat / lng         — real coordinates (look up accurately)
+  type              — one of: start, stop, highlight, end
+
+route-level fields:
+  mode              — primary transport: hiking, train, bus, car, 4x4,
+                      boat, plane, motorcycle, bicycle, mixed
+  map_zoom          — 5–15 (continent=5, country=7, region=9,
+                      day hike=13, single trail=15)
+
+The map renders a direct line through all points in order.
+Use real coordinates — wrong coordinates produce a wrong map.
 
 ═══════════════════════════════════════════════════════════════
 JSON STRUCTURE ADDITION (NEW)
@@ -248,18 +259,10 @@ Insert after "guide":
 
 "route": {
   "mode": "",
-  "map_center": { "lat": 0, "lng": 0 },
   "map_zoom": 13,
-  "waypoints": [
-    {
-      "name": "",
-      "lat": 0,
-      "lng": 0,
-      "type": "start",
-      "note": "",
-      "transport_to_next": "",
-      "duration_to_next": ""
-    }
+  "points": [
+    { "name": "", "lat": 0, "lng": 0, "type": "start" },
+    { "name": "", "lat": 0, "lng": 0, "type": "highlight" }
   ]
 },
 
