@@ -1,0 +1,76 @@
+{
+  "story_id": "zurich-lake-crossing-swim-2025",
+  "title": "Swimming Across Lake Zurich",
+  "slug": "zurich-lake-crossing-swim",
+  "status": "published",
+  "created_date": "2026-04-18",
+  "language": "en",
+  "geography": {
+    "continent": "europe",
+    "country": "Switzerland",
+    "country_code": "CH",
+    "regions": [
+      "Zurich"
+    ],
+    "nearest_major_city": "Zurich",
+    "coordinates": {
+      "lat": 47.3667,
+      "lng": 8.55
+    }
+  },
+  "classification": {
+    "primary_collection": "Switzerland",
+    "all_collections": [
+      "Switzerland",
+      "City Experiences",
+      "Outdoor Activities"
+    ],
+    "journey_category": "day_trip",
+    "activity_category": "swimming",
+    "activity_tags": [
+      "lake zurich swim",
+      "zurich open water swim",
+      "zurich summer events",
+      "switzerland swimming event"
+    ]
+  },
+  "difficulty": {
+    "overall_level": "moderate",
+    "physical_fitness_required": "moderate",
+    "technical_skill_required": "basic swimming ability",
+    "total_distance_km": 1.5
+  },
+  "timing": {
+    "duration_hours": 2,
+    "best_months": [
+      7
+    ],
+    "best_seasons": [
+      "summer"
+    ],
+    "weather_dependent": true
+  },
+  "logistics": {
+    "transportation_required": [
+      "public_transport",
+      "walking"
+    ],
+    "car_required": false,
+    "public_transport_accessible": true,
+    "permits_required": true,
+    "permits_info": "Registration required for official lake crossing event"
+  },
+  "budget": {
+    "level": "budget",
+    "estimated_cost_usd": {
+      "min": 20,
+      "max": 40,
+      "currency": "USD"
+    }
+  },
+  "credibility": {
+    "times_completed": 1,
+    "most_recent_completion": "2025-07-02",
+    "tested_by": "pikelis"
+  }
+}
