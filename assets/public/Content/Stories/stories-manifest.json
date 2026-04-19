@@ -4,7 +4,8 @@
   "stories": [
     {
       "folder": "Mt. Aconcagua summit expedition",
-      "metaFile": "20170215-Meta-aconcagua-summit-expedition.txt"
+      "metaFile": "20170215-Meta-aconcagua-summit-expedition.txt",
+      "storyFile": "20170215-Inspire-aconcagua-summit-expedition.txt"
     },
     {
       "folder": "Triftbrucke from Zurich",
@@ -53,7 +54,27 @@
     },
     {
       "folder": "Around Bioko island in Equatorial Guinea",
-      "metaFile": "20250316-Meta-equatorial-guinea-bioko-island-journey.txt"
+      "metaFile": "20250316-Meta-equatorial-guinea-bioko-island-journey.txt",
+      "storyFile": "20250316-Inspire-equatorial-guinea-bioko-island-journey.txt",
+      "photos": [
+        "20250308_145212.jpg",
+        "20250308_155453.jpg",
+        "20250308_160246.jpg",
+        "20250308_161002.jpg",
+        "20250308_161354.jpg",
+        "20250308_173452.jpg",
+        "20250308_195247.jpg",
+        "20250308_235941.jpg",
+        "20250309_030419.jpg",
+        "20250309_112636.jpg",
+        "20250309_130848.jpg",
+        "20250309_151501.jpg",
+        "20250309_153541.jpg",
+        "20250309_171504.jpg",
+        "20250309_181005.jpg",
+        "20250309_185155.jpg",
+        "20250309_193653.jpg"
+      ]
     },
     {
       "folder": "Romania roadtrip",
