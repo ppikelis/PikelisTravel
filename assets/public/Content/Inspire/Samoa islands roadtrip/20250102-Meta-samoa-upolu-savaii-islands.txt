@@ -1,0 +1,35 @@
+{
+  "story_id": "samoa-upolu-savaii-islands",
+  "title": "Samoa \u2014 Upolu and Savai\u2018i Islands",
+  "slug": "samoa-upolu-savaii-islands",
+  "status": "published",
+  "created_date": "2026-04-18",
+  "language": "en",
+  "geography": {
+    "continent": "oceania",
+    "country": "Samoa",
+    "regions": [
+      "Upolu",
+      "Savai\u2018i"
+    ]
+  },
+  "classification": {
+    "primary_collection": "Pacific Islands",
+    "all_collections": [
+      "Pacific Islands",
+      "Island Travel",
+      "Road Trips"
+    ],
+    "journey_category": "multi_day_trip",
+    "activity_category": "island_exploration"
+  },
+  "difficulty": {
+    "overall_level": "easy",
+    "technical_skill_required": "none"
+  },
+  "credibility": {
+    "times_completed": 1,
+    "most_recent_completion": "2025-01-02",
+    "tested_by": "pikelis"
+  }
+}

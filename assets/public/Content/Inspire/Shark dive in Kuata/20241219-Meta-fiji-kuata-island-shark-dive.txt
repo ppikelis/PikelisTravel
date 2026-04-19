@@ -1,0 +1,35 @@
+{
+  "story_id": "fiji-kuata-island-shark-dive",
+  "title": "Kuata Island Shark Dive, Fiji",
+  "slug": "fiji-kuata-island-shark-dive",
+  "status": "published",
+  "created_date": "2026-04-18",
+  "language": "en",
+  "geography": {
+    "continent": "oceania",
+    "country": "Fiji",
+    "regions": [
+      "Kuata Island",
+      "Yasawa Islands"
+    ]
+  },
+  "classification": {
+    "primary_collection": "Pacific Islands",
+    "all_collections": [
+      "Pacific Islands",
+      "Diving",
+      "Wildlife Encounters"
+    ],
+    "journey_category": "single_activity",
+    "activity_category": "scuba_diving"
+  },
+  "difficulty": {
+    "overall_level": "moderate",
+    "technical_skill_required": "open_water_certification_required"
+  },
+  "credibility": {
+    "times_completed": 1,
+    "most_recent_completion": "2024-12-19",
+    "tested_by": "pikelis"
+  }
+}

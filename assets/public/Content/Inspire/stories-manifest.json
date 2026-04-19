@@ -1,4 +1,75 @@
 {
   "version": 1,
-  "stories": []
+  "generated": "2026-04-19T00:00:00.000Z",
+  "stories": [
+    {
+      "folder": "Mt. Aconcagua summit expedition",
+      "metaFile": "20170215-Meta-aconcagua-summit-expedition.txt"
+    },
+    {
+      "folder": "Triftbrucke from Zurich",
+      "metaFile": "Meta-Triftbrucke.txt",
+      "storyFile": "Story-Triftbrucke.md",
+      "photos": [
+        "20201018_100027.jpg",
+        "20201018_111328.jpg",
+        "20201018_113355.jpg",
+        "20201018_114042.jpg",
+        "20201018_130613.jpg"
+      ]
+    },
+    {
+      "folder": "Three Peaks Challenge",
+      "metaFile": "Meta-Three_peaks_challenge.txt",
+      "storyFile": "Story-Three_peaks_challenge.txt",
+      "photos": [
+        "20231111_100826.jpg",
+        "20231111_135604.jpg",
+        "20231111_154031.jpg",
+        "20231111_155337.jpg",
+        "20231112_021717.jpg",
+        "20231112_021731.jpg",
+        "20231112_090239.jpg",
+        "20231112_104207.jpg",
+        "20231112_135431.jpg"
+      ]
+    },
+    {
+      "folder": "Shark dive in Kuata",
+      "metaFile": "20241219-Meta-fiji-kuata-island-shark-dive.txt"
+    },
+    {
+      "folder": "Volcano boarding",
+      "metaFile": "Meta-cerro-negro-volcano-boarding.txt",
+      "storyFile": "story-cerro-negro-volcano-boarding.txt"
+    },
+    {
+      "folder": "Samoa islands roadtrip",
+      "metaFile": "20250102-Meta-samoa-upolu-savaii-islands.txt"
+    },
+    {
+      "folder": "Crossing Nigeria - Africa Rally",
+      "metaFile": "20250301-Meta-benin-nigeria-cameroon-rally-road-story.txt"
+    },
+    {
+      "folder": "Around Bioko island in Equatorial Guinea",
+      "metaFile": "20250316-Meta-equatorial-guinea-bioko-island-journey.txt"
+    },
+    {
+      "folder": "Romania roadtrip",
+      "metaFile": "20250428-Meta-romania-country-140-europe-journey.txt"
+    },
+    {
+      "folder": "Mt. Toubkal summit hike",
+      "metaFile": "20250607-Meta-mount-toubkal-summit-day-hike.txt"
+    },
+    {
+      "folder": "Zurich lake crossing swim",
+      "metaFile": "20250702-Meta-zurich-lake-crossing-swim.txt"
+    },
+    {
+      "folder": "Mt. Camerron summit hike",
+      "metaFile": "20250813-Meta-mount-cameroon-summit-day-hike.txt"
+    }
+  ]
 }
