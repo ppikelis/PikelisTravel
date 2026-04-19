@@ -1,0 +1,86 @@
+{
+  "story_id": "morocco-mount-toubkal-2025",
+  "title": "Mount Toubkal Summit Day Hike",
+  "slug": "mount-toubkal-summit-day-hike",
+  "status": "published",
+  "created_date": "2026-04-18",
+  "language": "en",
+  "geography": {
+    "continent": "africa",
+    "country": "Morocco",
+    "country_code": "MA",
+    "regions": [
+      "High Atlas Mountains"
+    ],
+    "nearest_major_city": "Marrakech",
+    "coordinates": {
+      "lat": 31.0675,
+      "lng": -7.918
+    }
+  },
+  "classification": {
+    "primary_collection": "Morocco",
+    "all_collections": [
+      "Morocco",
+      "Mountains",
+      "Summit Hikes"
+    ],
+    "journey_category": "day_trip",
+    "activity_category": "mountain_hiking",
+    "activity_tags": [
+      "mount toubkal hike",
+      "high atlas mountains trek",
+      "north africa highest peak",
+      "toubkal summit route"
+    ]
+  },
+  "difficulty": {
+    "overall_level": "hard",
+    "physical_fitness_required": "high",
+    "technical_skill_required": "basic",
+    "elevation_gain_m": 2300,
+    "max_altitude_m": 4167,
+    "total_distance_km": 26
+  },
+  "timing": {
+    "duration_hours": 10,
+    "best_months": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "best_seasons": [
+      "spring",
+      "summer",
+      "autumn"
+    ],
+    "weather_dependent": true
+  },
+  "logistics": {
+    "transportation_required": [
+      "car",
+      "taxi",
+      "guide"
+    ],
+    "car_required": false,
+    "public_transport_accessible": false,
+    "permits_required": true,
+    "permits_info": "Local mountain guide required by regulation in Toubkal National Park"
+  },
+  "budget": {
+    "level": "budget",
+    "estimated_cost_usd": {
+      "min": 40,
+      "max": 120,
+      "currency": "USD"
+    }
+  },
+  "credibility": {
+    "times_completed": 1,
+    "most_recent_completion": "2025-06-07",
+    "tested_by": "pikelis"
+  }
+}

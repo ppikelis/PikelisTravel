@@ -1,0 +1,44 @@
+{
+  "story_id": "benin-nigeria-cameroon-rally-road-story",
+  "title": "Benin to Cameroon Overland via Nigeria",
+  "slug": "benin-nigeria-cameroon-rally-road-story",
+  "status": "published",
+  "created_date": "2026-04-18",
+  "language": "en",
+  "geography": {
+    "continent": "africa",
+    "countries": [
+      "Benin",
+      "Nigeria",
+      "Cameroon"
+    ],
+    "regions": [
+      "Cotonou",
+      "Lagos",
+      "Abuja",
+      "Zuma Rock",
+      "Lafia",
+      "Gembu",
+      "Mbanga Border"
+    ]
+  },
+  "classification": {
+    "primary_collection": "Africa",
+    "all_collections": [
+      "Africa",
+      "Overland Travel",
+      "Road Trips"
+    ],
+    "journey_category": "multi_day_trip",
+    "activity_category": "expedition_driving"
+  },
+  "difficulty": {
+    "overall_level": "high",
+    "technical_skill_required": "offroad_driving_experience_recommended"
+  },
+  "credibility": {
+    "times_completed": 1,
+    "most_recent_completion": "2025-03-06",
+    "tested_by": "pikelis"
+  }
+}

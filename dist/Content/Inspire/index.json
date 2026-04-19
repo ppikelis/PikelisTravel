@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "generated": "2026-04-18T22:00:00.000Z",
+  "titles": [
+    "Around Bioko island in Equatorial Guinea",
+    "Crossing Nigeria - Africa Rally",
+    "Mt. Aconcagua summit expedition",
+    "Mt. Camerron summit hike",
+    "Mt. Toubkal summit hike",
+    "Romania roadtrip",
+    "Samoa islands roadtrip",
+    "Shark dive in Kuata",
+    "Three Peaks Challenge",
+    "Triftbrucke from Zurich",
+    "Volcano boarding",
+    "Zurich lake crossing swim"
+  ],
+  "stories": [
+    {
+      "folder": "20170215-aconcagua-summit-expedition",
+      "metaFile": "20170215-Meta-aconcagua-summit-expedition.txt"
+    },
+    {
+      "folder": "20201018 Triftbrucke",
+      "metaFile": "Meta-Triftbrucke.txt",
+      "storyFile": "Story-Triftbrucke.md",
+      "photos": [
+        "20201018_100027.jpg",
+        "20201018_111328.jpg",
+        "20201018_113355.jpg",
+        "20201018_114042.jpg",
+        "20201018_130613.jpg"
+      ]
+    },
+    {
+      "folder": "20231111 Three Peaks Challenge",
+      "metaFile": "Meta-Three_peaks_challenge.txt",
+      "storyFile": "Story-Three_peaks_challenge.txt",
+      "photos": [
+        "20231111_100826.jpg",
+        "20231111_135604.jpg",
+        "20231111_154031.jpg",
+        "20231111_155337.jpg",
+        "20231112_021717.jpg",
+        "20231112_021731.jpg",
+        "20231112_090239.jpg",
+        "20231112_104207.jpg",
+        "20231112_135431.jpg"
+      ]
+    },
+    {
+      "folder": "20241219-fiji-kuata-island-shark-dive",
+      "metaFile": "20241219-Meta-fiji-kuata-island-shark-dive.txt"
+    },
+    {
+      "folder": "20241229-cerro-negro-volcano-boarding/20241229-cerro-negro-volcano-boarding",
+      "metaFile": "Meta-cerro-negro-volcano-boarding.txt",
+      "storyFile": "story-cerro-negro-volcano-boarding.txt"
+    },
+    {
+      "folder": "20250102-samoa-upolu-savaii-islands",
+      "metaFile": "20250102-Meta-samoa-upolu-savaii-islands.txt"
+    },
+    {
+      "folder": "20250301-benin-nigeria-cameroon-rally-road-story",
+      "metaFile": "20250301-Meta-benin-nigeria-cameroon-rally-road-story.txt"
+    },
+    {
+      "folder": "20250316-equatorial-guinea-bioko-island-journey",
+      "metaFile": "20250316-Meta-equatorial-guinea-bioko-island-journey.txt"
+    },
+    {
+      "folder": "20250428-romania-country-140-europe-journey",
+      "metaFile": "20250428-Meta-romania-country-140-europe-journey.txt"
+    },
+    {
+      "folder": "20250607-mount-toubkal-summit-day-hike",
+      "metaFile": "20250607-Meta-mount-toubkal-summit-day-hike.txt"
+    },
+    {
+      "folder": "20250702-zurich-lake-crossing-swim",
+      "metaFile": "20250702-Meta-zurich-lake-crossing-swim.txt"
+    },
+    {
+      "folder": "20250813-mount-cameroon-summit-day-hike",
+      "metaFile": "20250813-Meta-mount-cameroon-summit-day-hike.txt"
+    }
+  ]
+}
