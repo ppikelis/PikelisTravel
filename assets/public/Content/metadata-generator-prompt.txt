@@ -256,6 +256,12 @@ JSON STRUCTURE ADDITION (NEW)
 
 Insert after "guide":
 
+"guide_what_you_get": [
+  "Leave blank — fill in manually after reviewing the guide PDF",
+  "Each bullet = one concrete thing the buyer receives (a plan, a list, a rule, a comparison)",
+  "Copy exact section titles or deliverables from the guide — do not paraphrase"
+],
+
 "hero": {
   "eyebrow": "",
   "subtitle": "",

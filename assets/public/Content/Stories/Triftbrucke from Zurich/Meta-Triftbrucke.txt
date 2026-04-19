@@ -32,7 +32,14 @@
       "Prefer independent travel",
       "Prefer clear step-by-step logistics, not inspiration"
     ],
-    "what_you_get": [],
+    "what_you_get": [
+      "3 route variants compared: gondola up/down, gondola up/hike down, full hike from Gadmen",
+      "Step-by-step day plan for both car and public transport with exact timings",
+      "Gondola booking guide: schedule, capacity, pricing, and how to avoid missing your slot",
+      "Weather go/no-go rules using MeteoSwiss — when to postpone",
+      "Full cost breakdown: gondola, parking, train tickets, and saver fare tips",
+      "Complete packing list and what to eat and drink on the route"
+    ],
     "difficulty_at_a_glance": [
       "Steepness: consistent uphill ~1.5 h",
       "Exposure: suspension bridge only",
