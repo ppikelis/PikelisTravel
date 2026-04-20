@@ -1,1 +1,0 @@
-import{j as e,S as t,c as r,r as s}from"./SiteHeader-DjRgaDTj.js";function n(){return e.jsx("div",{className:"min-h-screen bg-[#f7f4ef] text-slate-900",children:e.jsx(t,{})})}r.createRoot(document.getElementById("root")).render(e.jsx(s.StrictMode,{children:e.jsx(n,{})}));
