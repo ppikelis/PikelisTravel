@@ -5,7 +5,7 @@
     {
       "folder": "2017 02 15 Mt. Aconcagua climb",
       "metaFile": "20170215-Meta-mt aconcagua climb.txt",
-      "storyFile": "",
+      "storyFile": "20170215-Inspire-mt aconcagua climb.txt",
       "photos": [
         "Hero-20170208_143352.jpg",
         "20170205_110459.jpg","20170206_185549.jpg","20170207_204023.jpg","20170209_115901.jpg",
@@ -90,7 +90,7 @@
     {
       "folder": "2025 03 16 Bioko island in Equatorial Guinea",
       "metaFile": "20250316-Meta-equatorial-guinea-bioko-island-journey.txt",
-      "storyFile": "",
+      "storyFile": "20250316-Inspire-equatorial-guinea-bioko-island-journey.md",
       "photos": ["Hero-20250309_130848.jpg"]
     },
     {
@@ -259,9 +259,9 @@
       "photos": []
     },
     {
-      "folder": "Santis from Zurich",
+      "folder": "2020 10 18 Santis from Zurich",
       "metaFile": "20180821-Meta-santis-from-zurich.txt",
-      "storyFile": "Story-Santis_from_Zurich.txt",
+      "storyFile": "20200913-Inspire-Story-Santis_from_Zurich.txt",
       "photos": [
         "20180821_115113.jpg","20180821_115625.jpg","20180821_130905.jpg","20180821_135011.jpg",
         "20180821_135327.jpg","20180821_151704.jpg","20180821_155551.jpg","20200913_092416.jpg",
@@ -278,7 +278,7 @@
       ]
     },
     {
-      "folder": "Triftbrucke from Zurich",
+      "folder": "2020 10 18 Triftbrucke from Zurich",
       "metaFile": "20201018-Meta-Triftbrucke.txt",
       "storyFile": "20201018-Inspire-Story-Triftbrucke.md",
       "photos": [
