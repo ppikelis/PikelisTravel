@@ -46,11 +46,13 @@
  *   SANITY_API_WRITE_TOKEN   (Editor role or higher)
  */
 import { createClient } from "next-sanity";
+import Anthropic from "@anthropic-ai/sdk";
 import { marked } from "marked";
 import yaml from "js-yaml";
 import { createReadStream, promises as fs } from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+import { fileURLToPath } from "node:url";
 
 /* ────────── setup ────────── */
 
@@ -58,15 +60,32 @@ const args = process.argv.slice(2);
 const folderArg = args.find((a) => !a.startsWith("--"));
 const DRY_RUN = args.includes("--dry-run");
 const VERBOSE = args.includes("--verbose");
+const GENERATE_METADATA = args.includes("--generate-metadata") || args.includes("--generate");
+const REGENERATE_METADATA = args.includes("--regenerate-metadata") || args.includes("--regenerate");
 
-if (!folderArg) exit("Usage: npm run publish -- <folder> [--dry-run] [--verbose]");
+if (!folderArg) {
+  exit(
+    "Usage: npm run publish -- <folder> [flags]\n" +
+      "  --dry-run              Preview without writing to Sanity\n" +
+      "  --verbose              Per-asset logging\n" +
+      "  --generate-metadata    Call Claude API to generate metadata if none exists\n" +
+      "                         (requires ANTHROPIC_API_KEY in .env.local)\n" +
+      "  --regenerate-metadata  Force-regenerate metadata even if a cached file exists",
+  );
+}
 
 const folder = path.resolve(folderArg);
+
+const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const METADATA_PROMPT_PATH = path.join(SCRIPT_DIR, "metadata-prompt.txt");
 
 const PROJECT_ID = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 const DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
 const TOKEN = process.env.SANITY_API_WRITE_TOKEN;
 const API_VERSION = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-04-24";
+
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || "claude-sonnet-4-6";
 
 if (!PROJECT_ID) exit("NEXT_PUBLIC_SANITY_PROJECT_ID is not set. Pass --env-file=.env.local to node.");
 if (!DRY_RUN && !TOKEN) exit("SANITY_API_WRITE_TOKEN is not set. Required unless --dry-run.");
@@ -328,6 +347,93 @@ function translateLegacyMeta(m) {
   };
 }
 
+/* ────────── Claude API metadata generator ────────── */
+
+async function generateMetadataWithClaude({ storyBody, pdfPath, photoFilenames, hasPdf }) {
+  if (!ANTHROPIC_API_KEY) {
+    exit(
+      "ANTHROPIC_API_KEY is not set. Required for --generate-metadata.\n" +
+        "Get a key at https://console.anthropic.com/settings/keys and add to .env.local.",
+    );
+  }
+
+  console.log(`\n🤖 Generating metadata with ${CLAUDE_MODEL}...`);
+
+  const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+  const promptTemplate = await fs.readFile(METADATA_PROMPT_PATH, "utf8");
+
+  /* Hydrate the prompt template with actual content */
+  const hydratedPrompt = promptTemplate
+    .replace(
+      "[PASTE YOUR STORY TEXT HERE. Otherwise auto-detect from folder.]",
+      storyBody || "(no story text available)",
+    )
+    .replace(
+      "[List filenames only if needed. Otherwise auto-detect from folder.]",
+      photoFilenames.length ? photoFilenames.join("\n") : "(no photos in folder)",
+    )
+    .replace("Has guide available: [Yes/No]", `Has guide available: ${hasPdf ? "Yes" : "No"}`)
+    .replace(
+      "Guide status: [available / in_progress / planned / none]",
+      `Guide status: ${hasPdf ? "available" : "none"}`,
+    );
+
+  const content = [];
+  if (pdfPath) {
+    const pdfBuffer = await fs.readFile(pdfPath);
+    content.push({
+      type: "document",
+      source: {
+        type: "base64",
+        media_type: "application/pdf",
+        data: pdfBuffer.toString("base64"),
+      },
+    });
+    if (VERBOSE) console.log(`  ↑ attached guide PDF (${Math.round(pdfBuffer.length / 1024)} KB)`);
+  }
+  content.push({ type: "text", text: hydratedPrompt });
+
+  const response = await anthropic.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 8000,
+    messages: [{ role: "user", content }],
+  });
+
+  const textBlock = response.content.find((b) => b.type === "text");
+  if (!textBlock) throw new Error("Claude response contained no text content");
+  const raw = textBlock.text.trim();
+
+  /* Extract JSON — handle raw JSON and ```json fenced blocks */
+  const fenced = raw.match(/```(?:json)?\s*\n([\s\S]+?)\n```/);
+  const jsonText = fenced ? fenced[1] : raw;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch (err) {
+    const debugPath = path.join(folder, "metadata.generation-debug.txt");
+    await fs.writeFile(debugPath, raw, "utf8");
+    throw new Error(
+      `Claude returned invalid JSON. Full response saved to ${debugPath}.\n` +
+        `Parse error: ${err.message}`,
+    );
+  }
+
+  const usage = response.usage;
+  if (usage) {
+    const cost =
+      (usage.input_tokens / 1_000_000) * 3 +
+      (usage.output_tokens / 1_000_000) * 15;
+    console.log(
+      `  ✓ Generated (${usage.input_tokens.toLocaleString()} in, ${usage.output_tokens.toLocaleString()} out — ~$${cost.toFixed(3)})`,
+    );
+  } else {
+    console.log(`  ✓ Generated`);
+  }
+
+  return parsed;
+}
+
 /* ────────── folder reader (detects format, returns unified shape) ────────── */
 
 async function readStoryInput() {
@@ -395,10 +501,39 @@ async function readStoryInput() {
     }
   }
 
+  /* If no metadata was found and generation is requested, call Claude */
+  const cachedGeneratedPath = path.join(folder, "metadata.generated.json");
+  const hasCachedGenerated = await fileExists(cachedGeneratedPath);
+
+  if (!frontmatter && hasCachedGenerated && !REGENERATE_METADATA) {
+    const cached = JSON.parse(await fs.readFile(cachedGeneratedPath, "utf8"));
+    frontmatter = translateLegacyMeta(cached);
+    metadataSource = "metadata.generated.json (cached — use --regenerate-metadata to refresh)";
+  }
+
+  if ((!frontmatter && GENERATE_METADATA) || REGENERATE_METADATA) {
+    const pdf = files.find((f) => /\.pdf$/i.test(f) && !/^\./.test(f));
+    const photos = files
+      .filter((f) => /\.(jpe?g|png|webp)$/i.test(f) && !/^\./.test(f));
+
+    const legacy = await generateMetadataWithClaude({
+      storyBody: body,
+      pdfPath: pdf ? path.join(folder, pdf) : null,
+      photoFilenames: photos,
+      hasPdf: !!pdf,
+    });
+    await fs.writeFile(cachedGeneratedPath, JSON.stringify(legacy, null, 2), "utf8");
+    frontmatter = translateLegacyMeta(legacy);
+    metadataSource = REGENERATE_METADATA
+      ? "metadata.generated.json (newly regenerated)"
+      : "metadata.generated.json (newly generated)";
+  }
+
   if (!frontmatter) {
     exit(
       `No metadata found in ${folder}.\n` +
-        `Expected one of: metadata.yaml / metadata.yml / metadata.json / *Meta*.txt / story.md with YAML frontmatter.`,
+        `Expected one of: metadata.yaml / metadata.yml / metadata.json / *Meta*.txt / story.md with YAML frontmatter.\n` +
+        `Or run with --generate-metadata to have Claude generate it for you.`,
     );
   }
 
