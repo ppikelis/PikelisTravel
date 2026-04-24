@@ -2,22 +2,43 @@
 /**
  * Pikelis Travel — publish a single story folder to Sanity.
  *
- * Expected folder layout:
- *   <folder>/
- *     story.md        ← markdown with YAML frontmatter (see scripts/story-template.md)
- *     hero.jpg        ← OR hero-*.jpg  (first match used as hero image)
- *     01-foo.jpg      ← gallery images, sorted by filename
- *     02-bar.jpg
- *     guide.pdf       ← optional; attaches as the guide's PDF asset
+ * Supports two folder layouts:
+ *
+ * A. LEGACY (matches your existing public/Content/Stories/... folders)
+ *    <folder>/
+ *      *Meta*.txt          JSON metadata (nested: hero/geography/classification/...)
+ *      *Inspire*.md        story body in markdown
+ *      *Story*.md          (alternative body filename)
+ *      Hero-*.jpg          hero image
+ *      <any other>.jpg     gallery images, sorted by filename
+ *      Guide-*.pdf         guide PDF (optional)
+ *      *.pptx, *.docx      source files — ignored
+ *
+ * B. NEW-STYLE (cleaner for new drafts)
+ *    <folder>/
+ *      metadata.yaml       OR metadata.yml OR metadata.json — flat shape (see template)
+ *      story.md            body only (YAML frontmatter also supported if no separate metadata file)
+ *      hero.jpg            OR hero-*.jpg
+ *      01-*.jpg, 02-*.jpg  gallery in numeric order
+ *      guide.pdf           optional
+ *
+ * Metadata precedence (highest wins):
+ *   1. metadata.yaml / metadata.yml / metadata.json
+ *   2. *Meta*.txt / *Meta*.json  (auto-translated from legacy nested shape)
+ *   3. YAML frontmatter at the top of story.md
+ *
+ * Body precedence:
+ *   1. story.md (body after frontmatter marker, or whole file if no frontmatter)
+ *   2. *Inspire*Story*.md / *Inspire*.md / *Story*.md
+ *   3. *Inspire*.txt / *Story*.txt  (treated as markdown)
  *
  * Usage:
- *   npm run publish -- drafts/my-new-story                 # publish or update
- *   npm run publish -- drafts/my-new-story --dry-run       # preview only
- *   npm run publish -- drafts/my-new-story --verbose       # per-asset logging
+ *   npm run publish -- <folder>                        # publish or overwrite
+ *   npm run publish -- <folder> --dry-run              # preview only
+ *   npm run publish -- <folder> --verbose              # per-asset logging
  *
- * Idempotent by slug: re-running overwrites the existing story with the new
- * content. Reference documents (destination, author, collection, category)
- * are created on first reference and reused thereafter.
+ * Idempotent by slug. Re-running overwrites. Reference docs (destination,
+ * author, collection, category) are created once, reused thereafter.
  *
  * Env vars required (from .env.local via `node --env-file`):
  *   NEXT_PUBLIC_SANITY_PROJECT_ID
@@ -41,7 +62,6 @@ const VERBOSE = args.includes("--verbose");
 if (!folderArg) exit("Usage: npm run publish -- <folder> [--dry-run] [--verbose]");
 
 const folder = path.resolve(folderArg);
-const STORY_MD = path.join(folder, "story.md");
 
 const PROJECT_ID = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 const DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
@@ -58,6 +78,8 @@ const client = createClient({
   token: TOKEN,
   useCdn: false,
 });
+
+const DEFAULT_AUTHOR = "Paulius Pikelis";
 
 /* ────────── utils ────────── */
 
@@ -102,20 +124,285 @@ function pruneUndefined(obj) {
   return obj;
 }
 
-/* ────────── frontmatter parser ────────── */
+/* ────────── legacy JSON → flat frontmatter translator ────────── */
 
-async function readStoryMd() {
-  if (!(await fileExists(STORY_MD))) exit(`No story.md found in ${folder}`);
-  const raw = await fs.readFile(STORY_MD, "utf8");
-  const match = raw.match(/^---\s*\n([\s\S]+?)\n---\s*\n([\s\S]*)$/);
-  if (!match) exit("story.md is missing YAML frontmatter (delimited by ---)");
-  let fm;
-  try {
-    fm = yaml.load(match[1]) || {};
-  } catch (err) {
-    exit(`Could not parse YAML frontmatter: ${err.message}`);
+function translateLegacyMeta(m) {
+  if (!m || typeof m !== "object") return {};
+
+  const g = m.geography || {};
+  const cls = m.classification || {};
+  const hero = m.hero || {};
+  const sales = m.sales || {};
+  const guide = m.guide || {};
+  const diff = m.difficulty || {};
+  const suit = m.suitability || {};
+  const tim = m.timing || {};
+  const log = m.logistics || {};
+  const bud = m.budget || {};
+  const diffr = m.differentiation || {};
+  const cred = m.credibility || {};
+  const seo = m.seo || {};
+  const disc = m.discovery || {};
+  const route = m.route || {};
+  const content = m.content || {};
+
+  /* guide.guide_page is e.g. "guides/trift-bridge-from-zurich.html"
+     — extract just the bare slug. */
+  let guidePageSlug;
+  if (typeof guide.guide_page === "string") {
+    const match = guide.guide_page.match(/guides\/([^/]+?)(?:\.html)?$/i);
+    if (match) guidePageSlug = match[1];
   }
-  return { frontmatter: fm, body: match[2].trim() };
+
+  return {
+    title: m.title,
+    slug: m.slug,
+    storyId: m.story_id,
+    status: m.status || "published",
+    language: m.language || "en",
+    publishedDate: m.created_date,
+    lastUpdated: m.last_updated,
+    author: m.author || DEFAULT_AUTHOR,
+    authorRole: m.author_role,
+
+    eyebrow: hero.eyebrow,
+    subtitle: hero.subtitle,
+    primaryStats: Array.isArray(hero.primary_stats)
+      ? hero.primary_stats.filter((s) => s && s.label && s.value)
+      : undefined,
+
+    destination: g.country,
+    countryCode: g.country_code,
+    continent: g.continent,
+    regions: g.regions,
+    nearestCity: g.nearest_major_city,
+    nearestCityDistanceKm: g.nearest_major_city_distance_km,
+    coordinates: g.coordinates,
+    startingPoint: g.starting_point
+      ? {
+          name: g.starting_point.name,
+          type: g.starting_point.type,
+          coordinates: g.starting_point.coordinates,
+        }
+      : undefined,
+
+    primaryCollection: cls.primary_collection,
+    allCollections: cls.all_collections,
+    journeyCategory: cls.journey_category,
+    activityCategory: cls.activity_category,
+    activityTags: cls.activity_tags,
+    journeyStyle: cls.journey_style,
+    highlights: cls.highlights,
+
+    difficulty: {
+      overallLevel: diff.overall_level,
+      physicalFitnessRequired: diff.physical_fitness_required,
+      technicalSkillRequired: diff.technical_skill_required,
+      elevationGainM: diff.elevation_gain_m,
+      maxAltitudeM: diff.max_altitude_m,
+      totalDistanceKm: diff.total_distance_km,
+      factors: diff.difficulty_factors,
+      notSuitableIf: diff.not_suitable_if,
+    },
+
+    suitability: {
+      familyFriendly: suit.family_friendly,
+      minAgeRecommended: suit.min_age_recommended,
+      soloFriendly: suit.solo_friendly,
+      beginnerFriendly: suit.beginner_friendly,
+      wheelchairAccessible: suit.wheelchair_accessible,
+      idealGroupSize: suit.ideal_group_size,
+      testedWith: suit.tested_with,
+      idealFor: suit.ideal_for,
+    },
+
+    timing: {
+      durationDays: tim.duration_days,
+      durationHours: tim.duration_hours,
+      durationDisplay: tim.duration_display,
+      bestMonths: tim.best_months,
+      bestSeasons: tim.best_seasons,
+      avoidMonths: tim.avoid_months,
+      timeOfDay: tim.time_of_day,
+      weatherDependent: tim.weather_dependent,
+      snowSeasonAccessible: tim.snow_season_accessible,
+    },
+
+    logistics: {
+      transportRequired: log.transportation_required,
+      transportDifficulty: log.transportation_difficulty,
+      carRequired: log.car_required,
+      fourByFourRequired: log["4x4_required"],
+      publicTransportAccessible: log.public_transport_accessible,
+      accommodationType: log.accommodation_type,
+      permitsRequired: log.permits_required,
+      permitsInfo: log.permits_info,
+      bookingsRequired: log.bookings_required,
+      bookingsAdvanceDays: log.bookings_advance_days,
+      specialEquipment: log.special_equipment,
+      rentalEquipmentAvailable: log.rental_equipment_available,
+    },
+
+    budget: {
+      level: bud.level,
+      estimatedCostMin: bud.estimated_cost_usd?.min,
+      estimatedCostMax: bud.estimated_cost_usd?.max,
+      currency: bud.estimated_cost_usd?.currency || "USD",
+      costBreakdown: bud.cost_breakdown
+        ? {
+            transport: bud.cost_breakdown.transport,
+            food: bud.cost_breakdown.food,
+            equipmentRental: bud.cost_breakdown.equipment_rental,
+            accommodation: bud.cost_breakdown.accommodation,
+            activities: bud.cost_breakdown.activities,
+          }
+        : undefined,
+      moneySavingTips: bud.money_saving_tips,
+    },
+
+    differentiation: {
+      uniqueSellingPoints: diffr.unique_selling_points,
+      whatMakesThisSpecial: diffr.what_makes_this_special,
+      bestForCrowdType: diffr.best_for_crowd_type,
+      crowdLevel: diffr.crowd_level,
+      scenicRating: diffr.scenic_rating,
+      adrenaline: diffr.adrenaline_level,
+    },
+
+    guide: guide
+      ? {
+          hasGuide: guide.has_guide === true || guide.has_guide === "true",
+          status: guide.guide_status,
+          price: guide.guide_price != null ? Number(guide.guide_price) : undefined,
+          currency: guide.guide_currency,
+          format: guide.guide_format,
+          pageSlug: guidePageSlug,
+          legacyPdfFilename: guide.guide_pdf,
+        }
+      : undefined,
+
+    sales: {
+      whyThisTrip: sales.why_this_trip,
+      whoThisIsFor: sales.who_this_is_for,
+      whatYouGet: sales.what_you_get,
+      difficultyAtAGlance: sales.difficulty_at_a_glance,
+      notSuitable: sales.not_suitable,
+    },
+
+    credibility: {
+      timesCompleted: cred.times_completed,
+      mostRecentCompletion: cred.most_recent_completion,
+      testedBy: cred.tested_by,
+      verifiedFacts: cred.verified_facts,
+      commonMistakes: cred.common_mistakes,
+      insiderTips: cred.insider_tips,
+    },
+
+    route: { mode: route.mode, mapZoom: route.map_zoom },
+    routePoints: Array.isArray(route.points)
+      ? route.points
+          .filter((p) => p && p.name && typeof p.lat === "number")
+          .map((p) => ({
+            name: p.name,
+            coordinates: { lat: p.lat, lng: p.lng },
+            type: p.type,
+          }))
+      : undefined,
+
+    seo: {
+      metaTitle: seo.meta_title,
+      metaDescription: seo.meta_description,
+      keywords: seo.keywords,
+      searchTags: seo.search_tags,
+      searchSynonyms: disc.search_synonyms,
+      alternativeNames: disc.alternative_names,
+      appearsInSearches: disc.appears_in_searches,
+    },
+
+    featuredInHomepage: content.featured_in_homepage,
+    featuredPriority: content.featured_priority,
+
+    // Legacy hero image filename — we'll use file discovery instead
+    _legacyHeroImage: content.media?.hero_image,
+    _legacyHeroAlt: content.media?.hero_alt,
+  };
+}
+
+/* ────────── folder reader (detects format, returns unified shape) ────────── */
+
+async function readStoryInput() {
+  const entries = await fs.readdir(folder, { withFileTypes: true });
+  const files = entries.filter((e) => e.isFile()).map((e) => e.name);
+
+  /* 1. Metadata source */
+  const metaYaml = files.find((f) => /^metadata\.ya?ml$/i.test(f));
+  const metaJson = files.find((f) => /^metadata\.json$/i.test(f));
+  const metaLegacy = files.find((f) => /meta.*\.(txt|json)$/i.test(f) && !/^metadata\./i.test(f));
+
+  let frontmatter = null;
+  let metadataSource = null;
+
+  if (metaYaml) {
+    const raw = await fs.readFile(path.join(folder, metaYaml), "utf8");
+    frontmatter = yaml.load(raw) || {};
+    metadataSource = metaYaml;
+  } else if (metaJson) {
+    const raw = await fs.readFile(path.join(folder, metaJson), "utf8");
+    frontmatter = JSON.parse(raw);
+    metadataSource = metaJson;
+  } else if (metaLegacy) {
+    const raw = await fs.readFile(path.join(folder, metaLegacy), "utf8");
+    let legacy;
+    try {
+      legacy = JSON.parse(raw);
+    } catch (err) {
+      exit(`Could not parse legacy metadata "${metaLegacy}" as JSON: ${err.message}`);
+    }
+    frontmatter = translateLegacyMeta(legacy);
+    metadataSource = `${metaLegacy} (auto-translated from legacy format)`;
+  }
+
+  /* 2. Body source */
+  const storyMdPath = files.find((f) => /^story\.md$/i.test(f));
+  const inspireMd = files.find((f) => /inspire.*\.md$/i.test(f));
+  const storyMd = files.find((f) => /story.*\.md$/i.test(f) && !/^story\.md$/i.test(f));
+  const inspireTxt = files.find((f) => /inspire.*\.txt$/i.test(f) && !/meta/i.test(f));
+  const storyTxt = files.find((f) => /story.*\.txt$/i.test(f) && !/meta/i.test(f));
+
+  let body = "";
+  let bodySource = null;
+  const bodyFile = storyMdPath || inspireMd || storyMd || inspireTxt || storyTxt;
+
+  if (bodyFile) {
+    const raw = await fs.readFile(path.join(folder, bodyFile), "utf8");
+    bodySource = bodyFile;
+
+    /* If story.md has its own frontmatter and no separate metadata source was found,
+       use its frontmatter. Otherwise strip any frontmatter block and use only the body. */
+    const fmMatch = raw.match(/^---\s*\n([\s\S]+?)\n---\s*\n([\s\S]*)$/);
+    if (fmMatch) {
+      if (!frontmatter) {
+        try {
+          frontmatter = yaml.load(fmMatch[1]) || {};
+          metadataSource = `${bodyFile} (frontmatter)`;
+        } catch (err) {
+          exit(`Could not parse YAML frontmatter in ${bodyFile}: ${err.message}`);
+        }
+      }
+      body = fmMatch[2].trim();
+    } else {
+      body = raw.trim();
+    }
+  }
+
+  if (!frontmatter) {
+    exit(
+      `No metadata found in ${folder}.\n` +
+        `Expected one of: metadata.yaml / metadata.yml / metadata.json / *Meta*.txt / story.md with YAML frontmatter.`,
+    );
+  }
+
+  return { frontmatter, body, metadataSource, bodySource };
 }
 
 /* ────────── validation ────────── */
@@ -136,28 +423,42 @@ function validateFrontmatter(fm) {
     errs.push("guide.price is required when guide.hasGuide is true");
   }
   if (errs.length) {
-    exit(`Frontmatter validation failed:\n  - ${errs.join("\n  - ")}`);
+    exit(`Metadata validation failed:\n  - ${errs.join("\n  - ")}`);
   }
 }
 
-/* ────────── photo discovery ────────── */
+/* ────────── photo / pdf discovery ────────── */
 
-async function findPhotos() {
+async function findAssets() {
   const entries = await fs.readdir(folder, { withFileTypes: true });
   const files = entries.filter((e) => e.isFile()).map((e) => e.name);
-  const photos = files.filter((n) => /\.(jpe?g|png|webp)$/i.test(n));
-  const heroName = photos.find((n) => /^hero\b/i.test(n)) || null;
+
+  const photos = files
+    .filter((n) => /\.(jpe?g|png|webp)$/i.test(n))
+    .filter((n) => !/^\./.test(n));
+
+  const heroName =
+    photos.find((n) => /^hero\b/i.test(n)) ||
+    photos.find((n) => /hero/i.test(n)) ||
+    null;
+
   const gallery = photos
     .filter((n) => n !== heroName)
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  const pdf = files.find((n) => /\.pdf$/i.test(n)) || null;
-  return { heroName, gallery, pdf };
+
+  const pdfs = files.filter((n) => /\.pdf$/i.test(n)).filter((n) => !/^\./.test(n));
+  const pdf = pdfs.find((n) => /^guide\b/i.test(n)) || pdfs[0] || null;
+
+  /* Source files to explicitly ignore (warn if big ones found) */
+  const ignored = files.filter((n) => /\.(pptx?|docx?|xlsx?|psd|ai|sketch|fig|key|pages|numbers)$/i.test(n));
+
+  return { heroName, gallery, pdf, ignored };
 }
 
 function altFromFilename(name) {
   return path
     .basename(name, path.extname(name))
-    .replace(/^hero-?/i, "")
+    .replace(/^hero[-_\s]?/i, "")
     .replace(/^\d+[-_.\s]+/, "")
     .replace(/[-_]/g, " ")
     .trim() || "Photo";
@@ -208,7 +509,7 @@ function destinationRef(name, countryCode, continent) {
     name,
     slug: { _type: "slug", current: slug },
     country: name,
-    countryCode: countryCode ? countryCode.toUpperCase() : undefined,
+    countryCode: countryCode ? String(countryCode).toUpperCase() : undefined,
     continent: continent || undefined,
   });
 }
@@ -289,20 +590,19 @@ function mdToPortableText(md) {
   return blocks;
 }
 
-/* ────────── field mapping ────────── */
+/* ────────── field mapping (fm → Sanity doc) ────────── */
 
 async function buildStoryDoc(fm, body, heroName, galleryNames, pdfName) {
   const title = fm.title.trim();
   const slug = (fm.slug && fm.slug.trim()) || slugify(title);
 
-  /* hero + gallery uploads */
   let heroImage;
   if (heroName) {
     const asset = await uploadAsset(path.join(folder, heroName), "image");
     heroImage = {
       _type: "image",
       asset: { _type: "reference", _ref: asset._id },
-      alt: fm.heroAlt || altFromFilename(heroName),
+      alt: fm._legacyHeroAlt || fm.heroAlt || altFromFilename(heroName),
     };
   }
 
@@ -317,7 +617,6 @@ async function buildStoryDoc(fm, body, heroName, galleryNames, pdfName) {
     });
   }
 
-  /* pdf */
   let guideField;
   if (fm.guide) {
     const g = fm.guide;
@@ -338,12 +637,7 @@ async function buildStoryDoc(fm, body, heroName, galleryNames, pdfName) {
     };
   }
 
-  /* references */
-  const destRef = destinationRef(
-    fm.destination,
-    fm.countryCode,
-    fm.continent,
-  );
+  const destRef = destinationRef(fm.destination, fm.countryCode, fm.continent);
   const authRef = authorRef(fm.author, fm.authorRole || "partner");
   const primaryColRef = fm.primaryCollection ? collectionRef(fm.primaryCollection) : undefined;
   const allColRefs = Array.isArray(fm.allCollections)
@@ -352,23 +646,19 @@ async function buildStoryDoc(fm, body, heroName, galleryNames, pdfName) {
   const journeyCatRef = fm.journeyCategory ? categoryRef(fm.journeyCategory, "journey") : undefined;
   const activityCatRef = fm.activityCategory ? categoryRef(fm.activityCategory, "activity") : undefined;
 
-  /* body */
   const bodyBlocks = mdToPortableText(body);
 
-  /* coordinates helper */
   const gp = (c) =>
     c && typeof c.lat === "number" && typeof c.lng === "number"
       ? { _type: "geopoint", lat: c.lat, lng: c.lng }
       : undefined;
 
-  /* primary stats */
   const primaryStats = Array.isArray(fm.primaryStats)
     ? fm.primaryStats
         .filter((s) => s && s.label && s.value)
         .map((s) => ({ _type: "primaryStat", _key: randomKey(), label: String(s.label), value: String(s.value) }))
     : undefined;
 
-  /* route points */
   const routePoints = Array.isArray(fm.routePoints)
     ? fm.routePoints
         .filter((p) => p && p.name && p.coordinates)
@@ -536,30 +826,41 @@ async function main() {
       `  mode:     ${DRY_RUN ? "DRY-RUN (no writes)" : "LIVE"}\n`,
   );
 
-  const { frontmatter: fm, body } = await readStoryMd();
+  const { frontmatter: fm, body, metadataSource, bodySource } = await readStoryInput();
+
+  /* Legacy fallback: ensure author exists */
+  if (!fm.author) fm.author = DEFAULT_AUTHOR;
+
   validateFrontmatter(fm);
 
-  const { heroName, gallery, pdf } = await findPhotos();
+  const { heroName, gallery, pdf, ignored } = await findAssets();
+
+  const slug = (fm.slug && fm.slug.trim()) || slugify(fm.title);
+
   console.log(
-    `  title:    ${fm.title}\n` +
-      `  slug:     ${fm.slug || slugify(fm.title)}\n` +
+    `  metadata: ${metadataSource}\n` +
+      `  body:     ${bodySource || "(none — will publish with empty body)"}\n` +
+      `  title:    ${fm.title}\n` +
+      `  slug:     ${slug}\n` +
       `  hero:     ${heroName || "(none)"}\n` +
       `  gallery:  ${gallery.length} photos\n` +
       `  pdf:      ${pdf || "(none)"}\n` +
       `  guide?    ${fm.guide?.hasGuide ? "YES" : "no"}\n`,
   );
 
+  if (ignored.length) {
+    console.log(`  ignored: ${ignored.join(", ")} (non-publishable source files)\n`);
+  }
+
   const existing = TOKEN
-    ? await client.fetch(`*[_type == "story" && slug.current == $slug][0]{_id, title}`, {
-        slug: fm.slug || slugify(fm.title),
-      })
+    ? await client.fetch(`*[_type == "story" && slug.current == $slug][0]{_id, title}`, { slug })
     : null;
-  if (existing) console.log(`  ⚠ Existing story found — will overwrite (${existing._id})`);
+  if (existing) console.log(`  ⚠ Existing story found — will overwrite (${existing._id})\n`);
 
   const doc = await buildStoryDoc(fm, body, heroName, gallery, pdf);
 
   console.log(
-    `\n  refs to create/reuse:\n` +
+    `  refs to create/reuse:\n` +
       `    destinations: ${refQueue.filter((d) => d._type === "destination").length}\n` +
       `    authors:      ${refQueue.filter((d) => d._type === "author").length}\n` +
       `    collections:  ${refQueue.filter((d) => d._type === "collection").length}\n` +
@@ -572,7 +873,6 @@ async function main() {
     return;
   }
 
-  /* write references first, then the story */
   if (refQueue.length) {
     const refTx = client.transaction();
     for (const r of refQueue) refTx.createIfNotExists(r);
@@ -582,12 +882,12 @@ async function main() {
   await client.createOrReplace(doc);
 
   const guideUrl =
-    fm.guide?.hasGuide && (fm.guide?.pageSlug || doc.slug.current)
-      ? `https://pikelistravel.com/guides/${fm.guide?.pageSlug || doc.slug.current}`
+    fm.guide?.hasGuide && (fm.guide?.pageSlug || slug)
+      ? `https://pikelistravel.com/guides/${fm.guide?.pageSlug || slug}`
       : null;
 
   console.log(`\n✓ Published.`);
-  console.log(`  Story:  https://pikelistravel.com/inspire/${doc.slug.current}`);
+  console.log(`  Story:  https://pikelistravel.com/inspire/${slug}`);
   if (guideUrl) console.log(`  Guide:  ${guideUrl}`);
   console.log(`  Studio: https://pikelis-travel.vercel.app/studio/desk/story;${doc._id}\n`);
   console.log("Live site will update in ~30s via the Sanity → Vercel webhook.\n");
