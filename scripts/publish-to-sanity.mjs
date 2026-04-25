@@ -49,10 +49,39 @@ import { createClient } from "next-sanity";
 import Anthropic from "@anthropic-ai/sdk";
 import { marked } from "marked";
 import yaml from "js-yaml";
-import { createReadStream, promises as fs } from "node:fs";
+import { createReadStream, readFileSync, existsSync, promises as fs } from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
+
+/* Load .env.local with override semantics.
+ *
+ * Node's --env-file flag is non-overriding: if a parent process already set
+ * an env var (e.g. Claude Code sets ANTHROPIC_API_KEY=""), --env-file silently
+ * skips it. This loader unconditionally overrides — required so the script
+ * can run from any environment. */
+function loadEnvLocal() {
+  const envPath = path.resolve(".env.local");
+  if (!existsSync(envPath)) return;
+  const raw = readFileSync(envPath, "utf8");
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const m = trimmed.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
+    if (m) {
+      let value = m[2];
+      // Strip optional surrounding quotes
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      process.env[m[1]] = value;
+    }
+  }
+}
+loadEnvLocal();
 
 /* ────────── setup ────────── */
 
@@ -148,6 +177,11 @@ function pruneUndefined(obj) {
 function translateLegacyMeta(m) {
   if (!m || typeof m !== "object") return {};
 
+  /* Some fields may live at the top level (legacy Meta-*.txt format) OR
+     nested under `core_identification` (Claude-generated format). Try both. */
+  const ci = m.core_identification || {};
+  const pick = (...candidates) => candidates.find((v) => v !== undefined && v !== null);
+
   const g = m.geography || {};
   const cls = m.classification || {};
   const hero = m.hero || {};
@@ -173,16 +207,32 @@ function translateLegacyMeta(m) {
     if (match) guidePageSlug = match[1];
   }
 
+  /* Country: prefer single string field, else first of countries[] */
+  const countryFromArray = Array.isArray(g.countries) ? g.countries[0] : undefined;
+
+  /* Starting point: prefer object form, else build from start_location string */
+  let startingPoint;
+  if (g.starting_point && typeof g.starting_point === "object") {
+    startingPoint = g.starting_point;
+  } else if (typeof g.start_location === "string") {
+    startingPoint = { name: g.start_location };
+  }
+
+  /* best_for_crowd_type may be string OR array — coerce to first string */
+  const bestForCrowd = Array.isArray(diffr.best_for_crowd_type)
+    ? diffr.best_for_crowd_type[0]
+    : diffr.best_for_crowd_type;
+
   return {
-    title: m.title,
-    slug: m.slug,
-    storyId: m.story_id,
-    status: m.status || "published",
-    language: m.language || "en",
-    publishedDate: m.created_date,
-    lastUpdated: m.last_updated,
-    author: m.author || DEFAULT_AUTHOR,
-    authorRole: m.author_role,
+    title: pick(m.title, ci.title),
+    slug: pick(m.slug, ci.slug),
+    storyId: pick(m.story_id, ci.story_id),
+    status: pick(m.status, ci.status, "published"),
+    language: pick(m.language, ci.language, "en"),
+    publishedDate: pick(m.created_date, ci.created_date),
+    lastUpdated: pick(m.last_updated, ci.last_updated),
+    author: pick(m.author, ci.author, DEFAULT_AUTHOR),
+    authorRole: pick(m.author_role, ci.author_role),
 
     eyebrow: hero.eyebrow,
     subtitle: hero.subtitle,
@@ -190,18 +240,18 @@ function translateLegacyMeta(m) {
       ? hero.primary_stats.filter((s) => s && s.label && s.value)
       : undefined,
 
-    destination: g.country,
+    destination: pick(g.country, countryFromArray),
     countryCode: g.country_code,
     continent: g.continent,
     regions: g.regions,
     nearestCity: g.nearest_major_city,
     nearestCityDistanceKm: g.nearest_major_city_distance_km,
     coordinates: g.coordinates,
-    startingPoint: g.starting_point
+    startingPoint: startingPoint
       ? {
-          name: g.starting_point.name,
-          type: g.starting_point.type,
-          coordinates: g.starting_point.coordinates,
+          name: startingPoint.name,
+          type: startingPoint.type,
+          coordinates: startingPoint.coordinates,
         }
       : undefined,
 
@@ -282,19 +332,33 @@ function translateLegacyMeta(m) {
     differentiation: {
       uniqueSellingPoints: diffr.unique_selling_points,
       whatMakesThisSpecial: diffr.what_makes_this_special,
-      bestForCrowdType: diffr.best_for_crowd_type,
-      crowdLevel: diffr.crowd_level,
+      bestForCrowdType: bestForCrowd,
+      crowdLevel: pick(diffr.crowd_level, cls.crowd_level),
       scenicRating: diffr.scenic_rating,
       adrenaline: diffr.adrenaline_level,
     },
 
     guide: guide
       ? {
-          hasGuide: guide.has_guide === true || guide.has_guide === "true",
-          status: guide.guide_status,
-          price: guide.guide_price != null ? Number(guide.guide_price) : undefined,
-          currency: guide.guide_currency,
-          format: guide.guide_format,
+          /* undefined when not specified (so PDF presence can drive the decision);
+             only explicit true/false values flow through. */
+          hasGuide:
+            guide.has_guide === true || guide.has_guide === "true"
+              ? true
+              : guide.has_guide === false || guide.has_guide === "false"
+                ? false
+                : undefined,
+          status: guide.guide_status || guide.status,
+          price:
+            guide.guide_price != null
+              ? Number(guide.guide_price)
+              : guide.price_usd != null
+                ? Number(guide.price_usd)
+                : guide.price != null
+                  ? Number(guide.price)
+                  : undefined,
+          currency: guide.guide_currency || guide.currency,
+          format: guide.guide_format || guide.format,
           pageSlug: guidePageSlug,
           legacyPdfFilename: guide.guide_pdf,
         }
@@ -758,17 +822,23 @@ async function buildStoryDoc(fm, body, heroName, galleryNames, pdfName) {
   }
 
   let guideField;
-  if (fm.guide) {
-    const g = fm.guide;
+  /* A folder is treated as having a guide if a PDF is present, OR if
+     metadata explicitly says so. Frontmatter can override (set guide.hasGuide
+     to false to keep a story-only post even with a PDF in the folder). */
+  const inferredHasGuide = !!pdfName || !!fm.guide?.hasGuide;
+  if (fm.guide || pdfName) {
+    const g = fm.guide || {};
+    const explicitFalse = g.hasGuide === false;
+    const hasGuide = explicitFalse ? false : inferredHasGuide;
     let pdfRef;
-    if (pdfName) {
+    if (pdfName && hasGuide) {
       const asset = await uploadAsset(path.join(folder, pdfName), "file");
       pdfRef = asset._id;
     }
     guideField = {
       _type: "guide",
-      hasGuide: !!g.hasGuide,
-      status: g.status || undefined,
+      hasGuide,
+      status: g.status || (hasGuide ? "available" : undefined),
       pricingTier: g.pricingTier
         ? { _type: "reference", _ref: `pricingTier-${g.pricingTier}` }
         : undefined,
@@ -780,7 +850,7 @@ async function buildStoryDoc(fm, body, heroName, galleryNames, pdfName) {
             amount: Number(p.amount),
           }))
         : undefined,
-      format: Array.isArray(g.format) ? g.format : g.hasGuide ? ["PDF"] : undefined,
+      format: Array.isArray(g.format) ? g.format : hasGuide ? ["PDF"] : undefined,
       pdf: pdfRef ? { _type: "file", asset: { _type: "reference", _ref: pdfRef } } : undefined,
       pageSlug: g.pageSlug || undefined,
     };
@@ -986,6 +1056,10 @@ async function main() {
 
   const slug = (fm.slug && fm.slug.trim()) || slugify(fm.title);
 
+  /* Will the published doc be a guide? PDF presence implies yes unless
+     metadata explicitly sets guide.hasGuide: false. */
+  const willBeGuide = fm.guide?.hasGuide === false ? false : !!(pdf || fm.guide?.hasGuide);
+
   console.log(
     `  metadata: ${metadataSource}\n` +
       `  body:     ${bodySource || "(none — will publish with empty body)"}\n` +
@@ -994,7 +1068,7 @@ async function main() {
       `  hero:     ${heroName || "(none)"}\n` +
       `  gallery:  ${gallery.length} photos\n` +
       `  pdf:      ${pdf || "(none)"}\n` +
-      `  guide?    ${fm.guide?.hasGuide ? "YES" : "no"}\n`,
+      `  guide?    ${willBeGuide ? "YES" : "no"}\n`,
   );
 
   if (ignored.length) {
