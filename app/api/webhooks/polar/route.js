@@ -19,6 +19,12 @@ import { Webhooks } from "@polar-sh/nextjs";
 import { revalidatePath } from "next/cache";
 import { writeClient } from "../../../../sanity/lib/writeClient";
 
+const WEBHOOK_SECRET = process.env.POLAR_WEBHOOK_SECRET;
+
+if (!WEBHOOK_SECRET) {
+  console.error("[polar-webhook] POLAR_WEBHOOK_SECRET is not set");
+}
+
 async function bumpPurchaseCount(productId) {
   if (!productId) return;
 
@@ -41,10 +47,37 @@ async function bumpPurchaseCount(productId) {
   revalidatePath(`/guides/${story.guidePageSlug || story.slug}`);
 }
 
-export const POST = Webhooks({
-  webhookSecret: process.env.POLAR_WEBHOOK_SECRET,
-  onOrderPaid: async (payload) => {
-    const productId = payload?.data?.product_id || payload?.data?.productId;
-    await bumpPurchaseCount(productId);
-  },
-});
+const polarHandler = WEBHOOK_SECRET
+  ? Webhooks({
+      webhookSecret: WEBHOOK_SECRET,
+      onOrderPaid: async (payload) => {
+        const productId =
+          payload?.data?.product_id ||
+          payload?.data?.productId ||
+          payload?.data?.product?.id;
+        if (!productId) {
+          console.warn("[polar-webhook] order.paid payload had no product id", payload?.data);
+          return;
+        }
+        await bumpPurchaseCount(productId);
+      },
+    })
+  : null;
+
+export async function POST(request) {
+  if (!polarHandler) {
+    return Response.json(
+      { error: "POLAR_WEBHOOK_SECRET not configured in deployed environment" },
+      { status: 503 },
+    );
+  }
+  try {
+    return await polarHandler(request);
+  } catch (err) {
+    console.error("[polar-webhook] handler threw:", err);
+    return Response.json(
+      { error: "webhook handler error", message: String(err?.message || err) },
+      { status: 500 },
+    );
+  }
+}
