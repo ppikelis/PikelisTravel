@@ -52,11 +52,11 @@ export default async function ThanksPage() {
           Check your email
         </h1>
         <p className="max-w-xl text-base text-slate-600">
-          Your guide PDF is on its way — usually within a minute. Look for an
+          Your guide PDF is on its way – usually within a minute. Look for an
           email from{" "}
           <span className="font-medium text-slate-900">TestedRoutes via Polar</span>{" "}
           with an <span className="font-medium text-slate-900">Access purchase</span>{" "}
-          button. The link is personal and re-usable, so keep the email — you can
+          button. The link is personal and re-usable, so keep the email – you can
           re-download anytime.
         </p>
         <p className="text-sm text-slate-500">
