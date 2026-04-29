@@ -15,13 +15,12 @@
  *   - Skip + report on missing required fields (price, EUR, PDF)
  *   - Per-guide error isolation
  *
- * Multi-currency note:
- *   We pass all currency prices in a single products.create() call. Polar's
- *   public docs confirm multi-currency support, but @polar-sh/sdk@0.47 type
- *   defs still say "at most one static price". If sandbox testing rejects
- *   multi-price creates, fall back to: (a) create EUR-only, (b) add other
- *   currencies via the Polar dashboard or a future raw-fetch call once the
- *   right endpoint is confirmed.
+ * Org token note: organization_id is implicit on every body. Passing it
+ * explicitly fails with `organization_token` validation error.
+ *
+ * Multi-currency: pass an array of fixed prices, one per currency, in
+ * a single products.create() call. Verified against sandbox 2026-04-29.
+ * (The SDK's "at most one static price" type comment is misleading.)
  *
  * Usage:
  *   npm run sync:polar -- --dry-run          # preview (default)
@@ -112,14 +111,6 @@ function describeReason(guide) {
   return null;
 }
 
-async function ensureOrganizationId() {
-  // The org token is scoped to one organization; pick the first one returned.
-  const list = await polar.organizations.list({});
-  const items = list.result?.items || [];
-  if (!items.length) exit("Polar token returned no organizations — wrong scope?");
-  return items[0].id;
-}
-
 async function findExistingProduct(polarProductId) {
   if (!polarProductId) return null;
   try {
@@ -133,8 +124,9 @@ async function findExistingProduct(polarProductId) {
 /**
  * Multipart-upload a PDF to Polar's Files API. Returns the file ID.
  * For PDFs under 10 MB this typically completes in a single part.
+ * Org token implies organization — no organization_id in body.
  */
-async function uploadPdfToPolar(organizationId, name, bytes) {
+async function uploadPdfToPolar(name, bytes) {
   const checksumSha256Base64 = crypto
     .createHash("sha256")
     .update(bytes)
@@ -142,7 +134,6 @@ async function uploadPdfToPolar(organizationId, name, bytes) {
   const size = bytes.length;
 
   const fileCreate = await polar.files.create({
-    organizationId,
     name,
     mimeType: "application/pdf",
     size,
@@ -195,7 +186,7 @@ async function downloadPdf(url) {
 
 /* ────────── per-guide handlers ────────── */
 
-async function syncCreate({ organizationId, guide }) {
+async function syncCreate({ guide }) {
   const prices = pickPrices(guide).map((p) => ({
     amountType: "fixed",
     priceCurrency: String(p.currency).toLowerCase(),
@@ -205,18 +196,13 @@ async function syncCreate({ organizationId, guide }) {
   // 1. Upload PDF
   if (VERBOSE) console.log(`    ↑ uploading PDF for ${guide.slug}`);
   const pdfBytes = await downloadPdf(guide.pdfUrl);
-  const fileId = await uploadPdfToPolar(
-    organizationId,
-    `${guide.slug}.pdf`,
-    pdfBytes,
-  );
+  const fileId = await uploadPdfToPolar(`${guide.slug}.pdf`, pdfBytes);
 
   // 2. Create File Downloads benefit
   if (VERBOSE) console.log(`    + creating downloadables benefit`);
   const benefit = await polar.benefits.create({
     type: "downloadables",
     description: `${guide.title} — guide PDF`.slice(0, 200),
-    organizationId,
     properties: { files: [fileId] },
   });
 
@@ -225,7 +211,6 @@ async function syncCreate({ organizationId, guide }) {
   const product = await polar.products.create({
     name: guide.title,
     description: guide.subtitle || `Tested route: ${guide.title}.`,
-    organizationId,
     recurringInterval: null,
     prices,
     metadata: {
@@ -302,12 +287,6 @@ async function main() {
 
   const report = { created: [], updated: [], skipped: [], failed: [] };
 
-  let organizationId = null;
-  if (!DRY_RUN) {
-    organizationId = await ensureOrganizationId();
-    if (VERBOSE) console.log(`Organization: ${organizationId}\n`);
-  }
-
   for (const guide of guides) {
     const reason = describeReason(guide);
     if (reason) {
@@ -334,12 +313,12 @@ async function main() {
           console.log(`  ✓ update ${guide.slug}`);
         } else {
           // polarProductId set but product missing — recreate.
-          const id = await syncCreate({ organizationId, guide });
+          const id = await syncCreate({ guide });
           report.created.push(guide.slug);
           console.log(`  ✓ create ${guide.slug.padEnd(40)} ${id} (was stale)`);
         }
       } else {
-        const id = await syncCreate({ organizationId, guide });
+        const id = await syncCreate({ guide });
         report.created.push(guide.slug);
         console.log(`  ✓ create ${guide.slug.padEnd(40)} ${id}`);
       }
