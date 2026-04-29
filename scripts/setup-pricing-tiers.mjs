@@ -130,8 +130,11 @@ const TIERS = [
 
 /* ────────── existing-guide tier assignments ────────── */
 
+// Story `slug.current` (NOT `guide.pageSlug`). Triftbrücke's slug is
+// `triftbrucke-from-zurich`; the site shows it under `/guides/trift-bridge-from-zurich`
+// because `guide.pageSlug` is set on the doc.
 const GUIDE_TIER_ASSIGNMENTS = [
-  { storySlug: "trift-bridge-from-zurich", tierSlug: "day-trip" },
+  { storySlug: "triftbrucke-from-zurich", tierSlug: "day-trip" },
   { storySlug: "denali-west-buttress-2022", tierSlug: "expedition" },
 ];
 
