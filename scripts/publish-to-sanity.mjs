@@ -116,7 +116,7 @@ const API_VERSION = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-04-24";
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const CLAUDE_MODEL = process.env.CLAUDE_MODEL || "claude-sonnet-4-6";
 
-if (!PROJECT_ID) exit("NEXT_PUBLIC_SANITY_PROJECT_ID is not set. Pass --env-file=.env.local to node.");
+if (!PROJECT_ID) exit("NEXT_PUBLIC_SANITY_PROJECT_ID is not set. Add it to .env.local.");
 if (!DRY_RUN && !TOKEN) exit("SANITY_API_WRITE_TOKEN is not set. Required unless --dry-run.");
 
 const client = createClient({
@@ -442,6 +442,11 @@ async function generateMetadataWithClaude({ storyBody, pdfPath, photoFilenames, 
       `Guide status: ${hasPdf ? "available" : "none"}`,
     );
 
+  /* Block ordering matters for prompt caching (prefix-based):
+       1. PDF — large, identical across regenerates → cacheable
+       2. Hydrated prompt — story-specific, not cached
+     Cache hits make --regenerate (and re-publishes after a tweak) much
+     cheaper, since the PDF is by far the largest input token block. */
   const content = [];
   if (pdfPath) {
     const pdfBuffer = await fs.readFile(pdfPath);
@@ -452,8 +457,9 @@ async function generateMetadataWithClaude({ storyBody, pdfPath, photoFilenames, 
         media_type: "application/pdf",
         data: pdfBuffer.toString("base64"),
       },
+      cache_control: { type: "ephemeral" },
     });
-    if (VERBOSE) console.log(`  ↑ attached guide PDF (${Math.round(pdfBuffer.length / 1024)} KB)`);
+    if (VERBOSE) console.log(`  ↑ attached guide PDF (${Math.round(pdfBuffer.length / 1024)} KB, cacheable)`);
   }
   content.push({ type: "text", text: hydratedPrompt });
 
@@ -485,12 +491,29 @@ async function generateMetadataWithClaude({ storyBody, pdfPath, photoFilenames, 
 
   const usage = response.usage;
   if (usage) {
-    const cost =
-      (usage.input_tokens / 1_000_000) * 3 +
-      (usage.output_tokens / 1_000_000) * 15;
-    console.log(
-      `  ✓ Generated (${usage.input_tokens.toLocaleString()} in, ${usage.output_tokens.toLocaleString()} out — ~$${cost.toFixed(3)})`,
-    );
+    /* Per-million-token rates by Claude family. Cache reads/writes are
+       priced separately; ignored here for a quick estimate. */
+    const rates = /opus/i.test(CLAUDE_MODEL)
+      ? { input: 15, output: 75 }
+      : /haiku/i.test(CLAUDE_MODEL)
+        ? { input: 1, output: 5 }
+        : /sonnet/i.test(CLAUDE_MODEL)
+          ? { input: 3, output: 15 }
+          : null;
+    const cached = usage.cache_read_input_tokens || 0;
+    const cacheNote = cached > 0 ? ` (${cached.toLocaleString()} cached)` : "";
+    if (rates) {
+      const cost =
+        (usage.input_tokens / 1_000_000) * rates.input +
+        (usage.output_tokens / 1_000_000) * rates.output;
+      console.log(
+        `  ✓ Generated (${usage.input_tokens.toLocaleString()} in${cacheNote}, ${usage.output_tokens.toLocaleString()} out — ~$${cost.toFixed(3)})`,
+      );
+    } else {
+      console.log(
+        `  ✓ Generated (${usage.input_tokens.toLocaleString()} in${cacheNote}, ${usage.output_tokens.toLocaleString()} out — cost N/A for ${CLAUDE_MODEL})`,
+      );
+    }
   } else {
     console.log(`  ✓ Generated`);
   }
